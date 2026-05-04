@@ -15,3 +15,4 @@ media/
 # Testing
 .coverage
 .pytest_cache/
+.idea/
