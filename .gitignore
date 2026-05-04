@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+
+# Environment variables — MUHIM!
+.env
+
+# Django
+db.sqlite3
+media/
+
+# Testing
+.coverage
+.pytest_cache/
