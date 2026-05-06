@@ -16,3 +16,4 @@ media/
 .coverage
 .pytest_cache/
 .idea/
+staticfiles/
