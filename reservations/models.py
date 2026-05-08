@@ -22,6 +22,9 @@ class Reservation(models.Model):
                               default=Status.PENDING)
     special_requests = models.TextField(blank=True)
 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     def is_past(self):
         from django.utils import timezone
         reservation_dt = timezone.datetime.combine(
