@@ -28,7 +28,10 @@ class ReservationSerializer(serializers.ModelSerializer):
 
     def validate_reservation_date(self, value):
         """O'tib ketgan sanaga bron qilib bo'lmaydi"""
-        if value < timezone.now().date():
+        # if value < timezone.now().date():
+        # timezone.localdate() — server timezone bo'yicha bugungi sana
+        today = timezone.localdate()
+        if value < today:
             raise serializers.ValidationError(
                 "O'tib ketgan sanaga bron qilib bo'lmaydi."
             )
@@ -99,7 +102,10 @@ class ReservationCreateSerializer(serializers.ModelSerializer):
 
     def validate_reservation_date(self, value):
         """O'tib ketgan sanaga bron qilib bo'lmaydi"""
-        if value < timezone.now().date():
+        # if value < timezone.now().date():
+        # timezone.localdate() — server timezone bo'yicha bugungi sana
+        today = timezone.localdate()
+        if value < today:
             raise serializers.ValidationError(
                 "O'tib ketgan sanaga bron qilib bo'lmaydi."
             )
