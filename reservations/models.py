@@ -1,8 +1,9 @@
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
-from django.core.validators import MinValueValidator
-from users.models import CustomUser
+
 from restaurants.models import Table
+from users.models import CustomUser
 
 
 class Reservation(models.Model):
@@ -12,20 +13,20 @@ class Reservation(models.Model):
     """
 
     class Status(models.TextChoices):
-        PENDING = 'pending', 'Pending'  # Kutilmoqda
-        CONFIRMED = 'confirmed', 'Confirmed'  # Tasdiqlangan
-        CANCELLED = 'cancelled', 'Cancelled'  # Bekor qilingan
-        COMPLETED = 'completed', 'Completed'  # Yakunlangan
+        PENDING = "pending", "Pending"  # Kutilmoqda
+        CONFIRMED = "confirmed", "Confirmed"  # Tasdiqlangan
+        CANCELLED = "cancelled", "Cancelled"  # Bekor qilingan
+        COMPLETED = "completed", "Completed"  # Yakunlangan
 
     customer = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
-        related_name='reservations',
+        related_name="reservations",
     )
     table = models.ForeignKey(
         Table,
         on_delete=models.CASCADE,
-        related_name='reservations',
+        related_name="reservations",
     )
 
     # Bron boshlanish va tugash vaqti
@@ -35,7 +36,7 @@ class Reservation(models.Model):
 
     party_size = models.PositiveIntegerField(
         validators=[MinValueValidator(1)],
-        help_text='Nechta kishi uchun bron',
+        help_text="Nechta kishi uchun bron",
     )
 
     status = models.CharField(
@@ -46,16 +47,16 @@ class Reservation(models.Model):
 
     special_requests = models.TextField(
         blank=True,
-        help_text='Maxsus talablar (vegetarian, allergiya va h.k.)',
+        help_text="Maxsus talablar (vegetarian, allergiya va h.k.)",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = 'Reservation'
-        verbose_name_plural = 'Reservations'
-        ordering = ['-reservation_date', '-start_time']
+        verbose_name = "Reservation"
+        verbose_name_plural = "Reservations"
+        ordering = ["-reservation_date", "-start_time"]
 
     def __str__(self):
         return (
@@ -76,7 +77,7 @@ class Reservation(models.Model):
 
     def can_be_cancelled(self):
         """Bekor qilish mumkinmi? Faqat o'tib ketmagan, pending/confirmed bronlar"""
-        return (
-                not self.is_past()
-                and self.status in [self.Status.PENDING, self.Status.CONFIRMED]
-        )
+        return not self.is_past() and self.status in [
+            self.Status.PENDING,
+            self.Status.CONFIRMED,
+        ]

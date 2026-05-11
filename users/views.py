@@ -1,13 +1,15 @@
-from rest_framework import generics, status, serializers
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from rest_framework import generics, serializers, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
+
+from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
 
 
 class RegisterView(generics.CreateAPIView):
     """POST /api/auth/register/"""
+
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
 
@@ -29,6 +31,7 @@ class RegisterView(generics.CreateAPIView):
 
 class LoginView(APIView):
     """POST /api/auth/login/"""
+
     permission_classes = [AllowAny]
     serializer_class = LoginSerializer
 
@@ -47,6 +50,7 @@ class LoginView(APIView):
 
 class LogoutView(APIView):
     """POST /api/auth/logout/ — refresh token blacklist ga qo'shiladi"""
+
     permission_classes = [IsAuthenticated]
     serializer_class = serializers.Serializer
 
@@ -65,6 +69,7 @@ class LogoutView(APIView):
 
 class ProfileView(generics.RetrieveUpdateAPIView):
     """GET, PATCH /api/auth/profile/"""
+
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
 

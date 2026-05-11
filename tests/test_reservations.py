@@ -1,5 +1,5 @@
-import pytest
 import datetime
+
 from tests.factories import ReservationFactory, TableFactory
 
 
@@ -73,9 +73,7 @@ class TestReservationConflict:
             customer=customer,
             reservation_date=yesterday,
         )
-        response = auth_client.post(
-            f"/api/reservations/{reservation.id}/cancel/"
-        )
+        response = auth_client.post(f"/api/reservations/{reservation.id}/cancel/")
         assert response.status_code == 400
 
     def test_capacity_exceeded(self, auth_client, db):
@@ -99,7 +97,5 @@ class TestReservationConflict:
             customer=customer,
             reservation_date=tomorrow,
         )
-        response = auth_client.post(
-            f"/api/reservations/{reservation.id}/cancel/"
-        )
+        response = auth_client.post(f"/api/reservations/{reservation.id}/cancel/")
         assert response.status_code == 200

@@ -1,13 +1,15 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
-from .models import Reservation
-from .serializers import ReservationSerializer, ReservationCreateSerializer
-from .filters import ReservationFilter
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
 from users.permissions import IsReservationOwner
+
+from .filters import ReservationFilter
+from .models import Reservation
+from .serializers import ReservationCreateSerializer, ReservationSerializer
 
 
 class ReservationViewSet(viewsets.ModelViewSet):
@@ -35,9 +37,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
             return super().get_queryset()
         # Owner — o'z restoraniga kelgan bronlarni ko'radi
         if user.role == "owner":
-            return super().get_queryset().filter(
-                table__restaurant__owner=user
-            )
+            return super().get_queryset().filter(table__restaurant__owner=user)
         # Customer — faqat o'z bronlarini ko'radi
         return super().get_queryset().filter(customer=user)
 

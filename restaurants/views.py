@@ -1,24 +1,20 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.response import Response
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter, OrderingFilter
-from .models import Restaurant, Table
-from .serializers import (
-    RestaurantSerializer,
-    RestaurantListSerializer,
-    TableSerializer,
-)
-from .filters import RestaurantFilter, TableFilter
+from rest_framework.response import Response
+
 from users.permissions import IsOwner, IsOwnerOrReadOnly
+
+from .filters import RestaurantFilter, TableFilter
+from .models import Restaurant, Table
+from .serializers import RestaurantListSerializer, RestaurantSerializer, TableSerializer
 
 
 class RestaurantViewSet(viewsets.ModelViewSet):
     # select_related — JOIN, N+1 query muammosini hal qiladi
-    queryset = Restaurant.objects.filter(
-        is_active=True
-    ).select_related("owner")
+    queryset = Restaurant.objects.filter(is_active=True).select_related("owner")
 
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = RestaurantFilter
@@ -28,7 +24,7 @@ class RestaurantViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return RestaurantListSerializer  # yengil
-        return RestaurantSerializer          # to'liq
+        return RestaurantSerializer  # to'liq
 
     def get_permissions(self):
         """Action ga qarab permission tanlash"""
@@ -61,15 +57,11 @@ class RestaurantViewSet(viewsets.ModelViewSet):
     def my_restaurants(self, request):
         """GET /api/restaurants/my-restaurants/"""
         restaurants = Restaurant.objects.filter(owner=request.user)
-        return Response(
-            RestaurantListSerializer(restaurants, many=True).data
-        )
+        return Response(RestaurantListSerializer(restaurants, many=True).data)
 
 
 class TableViewSet(viewsets.ModelViewSet):
-    queryset = Table.objects.select_related(
-        "restaurant", "restaurant__owner"
-    )
+    queryset = Table.objects.select_related("restaurant", "restaurant__owner")
     serializer_class = TableSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = TableFilter

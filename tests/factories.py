@@ -1,9 +1,11 @@
 import datetime
+
 import factory
 from factory.django import DjangoModelFactory
-from users.models import CustomUser
-from restaurants.models import Restaurant, Table
+
 from reservations.models import Reservation
+from restaurants.models import Restaurant, Table
+from users.models import CustomUser
 
 
 class UserFactory(DjangoModelFactory):
