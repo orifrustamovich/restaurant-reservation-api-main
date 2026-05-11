@@ -3,25 +3,23 @@ from rest_framework.permissions import BasePermission
 
 class IsOwner(BasePermission):
     """Faqat restaurant owner uchun ruxsat"""
+
     message = "Only restaurant owners can perform this action"
 
     def has_permission(self, request, view):
         return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.is_owner
+            request.user and request.user.is_authenticated and request.user.is_owner
         )
 
 
 class IsCustomer(BasePermission):
     """Faqat customer uchun ruxsat"""
+
     message = "Only customers can perform this action"
 
     def has_permission(self, request, view):
         return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.is_customer
+            request.user and request.user.is_authenticated and request.user.is_customer
         )
 
 

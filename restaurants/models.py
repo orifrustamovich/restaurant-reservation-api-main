@@ -1,5 +1,6 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
+
 from users.models import CustomUser
 
 
@@ -9,11 +10,12 @@ class Restaurant(models.Model):
     Bir owner bir nechta restaurant ochishi mumkin (1-to-many).
     on_delete=CASCADE — owner o'chirilsa, uning restoranlari ham o'chadi.
     """
+
     owner = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
-        related_name='restaurants',  # owner.restaurants.all() deb ishlatish mumkin
-        limit_choices_to={'role': 'owner'},  # Faqat owner bo'lgan userlar
+        related_name="restaurants",  # owner.restaurants.all() deb ishlatish mumkin
+        limit_choices_to={"role": "owner"},  # Faqat owner bo'lgan userlar
     )
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
@@ -23,7 +25,7 @@ class Restaurant(models.Model):
 
     # ImageField — Pillow kutubxonasi kerak
     image = models.ImageField(
-        upload_to='restaurants/',  # media/restaurants/ papkasiga saqlaydi
+        upload_to="restaurants/",  # media/restaurants/ papkasiga saqlaydi
         null=True,
         blank=True,
     )
@@ -45,9 +47,9 @@ class Restaurant(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = 'Restaurant'
-        verbose_name_plural = 'Restaurants'
-        ordering = ['-created_at']
+        verbose_name = "Restaurant"
+        verbose_name_plural = "Restaurants"
+        ordering = ["-created_at"]
 
     def __str__(self):
         return f"{self.name} — {self.owner.email}"
@@ -58,30 +60,27 @@ class Restaurant(models.Model):
 
 
 class Table(models.Model):
-    """
-    Har bir stol restoraniga tegishli.
-    table_number — restoranlar ichida unique bo'lishi kerak.
-    Misol: "Sushi Place" restoranida 1-stol, "Pizza House" da ham 1-stol bo'lishi mumkin.
-    """
     restaurant = models.ForeignKey(
         Restaurant,
         on_delete=models.CASCADE,
-        related_name='tables',
+        related_name="tables",
     )
     table_number = models.PositiveIntegerField()
     capacity = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(20)],
-        help_text='Stol sig\'imi (nechta kishi sig\'adi)',
+        help_text="Stol sig'imi (nechta kishi sig'adi)",
     )
     is_available = models.BooleanField(default=True)
     description = models.CharField(max_length=200, blank=True)
 
     class Meta:
-        verbose_name = 'Table'
-        verbose_name_plural = 'Tables'
+        verbose_name = "Table"
+        verbose_name_plural = "Tables"
         # unique_together — bir restoranda bir xil raqamli stol bo'lmasligi uchun
-        unique_together = ['restaurant', 'table_number']
-        ordering = ['restaurant', 'table_number']
+        unique_together = ["restaurant", "table_number"]
+        ordering = ["restaurant", "table_number"]
 
     def __str__(self):
-        return f"Table {self.table_number} (cap: {self.capacity}) — {self.restaurant.name}"
+        return (
+            f"Table {self.table_number} (cap: {self.capacity}) — {self.restaurant.name}"
+        )

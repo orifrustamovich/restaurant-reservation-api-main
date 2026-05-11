@@ -1,7 +1,9 @@
-from rest_framework import serializers
 from django.utils import timezone
+from rest_framework import serializers
+
+from restaurants.serializers import RestaurantListSerializer, TableSerializer
+
 from .models import Reservation
-from restaurants.serializers import TableSerializer, RestaurantListSerializer
 
 
 class ReservationSerializer(serializers.ModelSerializer):
@@ -9,22 +11,32 @@ class ReservationSerializer(serializers.ModelSerializer):
     Nested serializer — Reservation ichida Table va Restaurant ma'lumoti.
     Bu "read" uchun — ko'rish paytida to'liq ma'lumot.
     """
+
     # source — modelda qanday fielddan kelishini bildiradi
-    table_detail = TableSerializer(source='table', read_only=True)
+    table_detail = TableSerializer(source="table", read_only=True)
     restaurant_detail = RestaurantListSerializer(
-        source='table.restaurant',
+        source="table.restaurant",
         read_only=True,
     )
-    customer_email = serializers.EmailField(source='customer.email', read_only=True)
+    customer_email = serializers.EmailField(source="customer.email", read_only=True)
 
     class Meta:
         model = Reservation
         fields = [
-            'id', 'customer_email', 'table', 'table_detail', 'restaurant_detail',
-            'reservation_date', 'start_time', 'end_time', 'party_size',
-            'status', 'special_requests', 'created_at',
+            "id",
+            "customer_email",
+            "table",
+            "table_detail",
+            "restaurant_detail",
+            "reservation_date",
+            "start_time",
+            "end_time",
+            "party_size",
+            "status",
+            "special_requests",
+            "created_at",
         ]
-        read_only_fields = ['id', 'customer_email', 'status', 'created_at']
+        read_only_fields = ["id", "customer_email", "status", "created_at"]
 
     def validate_reservation_date(self, value):
         """O'tib ketgan sanaga bron qilib bo'lmaydi"""
@@ -41,8 +53,8 @@ class ReservationSerializer(serializers.ModelSerializer):
         attrs = super().validate(attrs)
 
         # Start time end time dan oldin bo'lishi kerak
-        if attrs.get('start_time') and attrs.get('end_time'):
-            if attrs['start_time'] >= attrs['end_time']:
+        if attrs.get("start_time") and attrs.get("end_time"):
+            if attrs["start_time"] >= attrs["end_time"]:
                 raise serializers.ValidationError(
                     "Boshlanish vaqti tugash vaqtidan oldin bo'lishi kerak."
                 )
@@ -51,10 +63,10 @@ class ReservationSerializer(serializers.ModelSerializer):
         # CONFLICT CHECK — eng muhim qism
         # =============================
         # Bir stolga bir vaqtda 2 ta bron bo'lmasligi uchun
-        table = attrs.get('table')
-        date = attrs.get('reservation_date')
-        start = attrs.get('start_time')
-        end = attrs.get('end_time')
+        table = attrs.get("table")
+        date = attrs.get("reservation_date")
+        start = attrs.get("start_time")
+        end = attrs.get("end_time")
 
         if table and date and start and end:
             # Mavjud bronlarni tekshiramiz
@@ -64,16 +76,18 @@ class ReservationSerializer(serializers.ModelSerializer):
             existing_reservations = Reservation.objects.filter(
                 table=table,
                 reservation_date=date,
-                status__in=['pending', 'confirmed'],  # Bekor qilinganlarni hisobga olmaymiz
+                status__in=[
+                    "pending",
+                    "confirmed",
+                ],  # Bekor qilinganlarni hisobga olmaymiz
             ).exclude(
-                pk=self.instance.pk if self.instance else None  # Update paytida o'zini exclude qilamiz
+                pk=self.instance.pk
+                if self.instance
+                else None  # Update paytida o'zini exclude qilamiz
             )
 
             for reservation in existing_reservations:
-                overlap = (
-                        reservation.start_time < end
-                        and reservation.end_time > start
-                )
+                overlap = reservation.start_time < end and reservation.end_time > start
                 if overlap:
                     raise serializers.ValidationError(
                         f"Bu stol {reservation.start_time}—{reservation.end_time} "
@@ -81,8 +95,8 @@ class ReservationSerializer(serializers.ModelSerializer):
                     )
 
         # Stol sig'imi tekshirish
-        if table and attrs.get('party_size'):
-            if attrs['party_size'] > table.capacity:
+        if table and attrs.get("party_size"):
+            if attrs["party_size"] > table.capacity:
                 raise serializers.ValidationError(
                     f"Bu stolga maksimum {table.capacity} kishi sig'adi. "
                     f"Siz {attrs['party_size']} kishi uchun bron qilmoqchisiz."
@@ -91,13 +105,16 @@ class ReservationSerializer(serializers.ModelSerializer):
         return attrs
 
 
-
 class ReservationCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
         fields = [
-            'table', 'reservation_date', 'start_time', 'end_time',
-            'party_size', 'special_requests',
+            "table",
+            "reservation_date",
+            "start_time",
+            "end_time",
+            "party_size",
+            "special_requests",
         ]
 
     def validate_reservation_date(self, value):
@@ -113,22 +130,22 @@ class ReservationCreateSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         # Start time end time dan oldin bo'lishi kerak
-        if attrs.get('start_time') and attrs.get('end_time'):
-            if attrs['start_time'] >= attrs['end_time']:
+        if attrs.get("start_time") and attrs.get("end_time"):
+            if attrs["start_time"] >= attrs["end_time"]:
                 raise serializers.ValidationError(
                     "Boshlanish vaqti tugash vaqtidan oldin bo'lishi kerak."
                 )
 
-        table = attrs.get('table')
-        date  = attrs.get('reservation_date')
-        start = attrs.get('start_time')
-        end   = attrs.get('end_time')
+        table = attrs.get("table")
+        date = attrs.get("reservation_date")
+        start = attrs.get("start_time")
+        end = attrs.get("end_time")
 
         if table and date and start and end:
             existing = Reservation.objects.filter(
                 table=table,
                 reservation_date=date,
-                status__in=['pending', 'confirmed'],
+                status__in=["pending", "confirmed"],
             )
             for reservation in existing:
                 if reservation.start_time < end and reservation.end_time > start:
@@ -137,8 +154,8 @@ class ReservationCreateSerializer(serializers.ModelSerializer):
                         f"vaqtida allaqachon band."
                     )
 
-        if table and attrs.get('party_size'):
-            if attrs['party_size'] > table.capacity:
+        if table and attrs.get("party_size"):
+            if attrs["party_size"] > table.capacity:
                 raise serializers.ValidationError(
                     f"Bu stolga maksimum {table.capacity} kishi sig'adi."
                 )

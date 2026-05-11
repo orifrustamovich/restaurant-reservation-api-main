@@ -1,5 +1,4 @@
-import pytest
-from tests.factories import RestaurantFactory, TableFactory, OwnerFactory
+from tests.factories import RestaurantFactory
 
 
 class TestRestaurantList:
