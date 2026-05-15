@@ -16,3 +16,26 @@ A production-ready RESTful API for managing restaurant reservations, built with 
 - Filtering, searching, pagination
 - Swagger / OpenAPI documentation
 - Dockerized with PostgreSQL
+
+## Tech Stack
+
+| Technology | Version |
+|---|---|
+| Python | 3.11 |
+| Django | 4.2 |
+| Django REST Framework | 3.14 |
+| PostgreSQL | 15 |
+| Docker & Docker Compose | latest |
+| JWT | SimpleJWT |
+
+## Quick Start (Docker)
+
+```bash
+git clone https://github.com/orifrustamovich/restaurant-reservation-api
+
+cd restaurant-reservation-api
+
+cp .env.example .env    # configure file .env
+
+docker compose up --build
+```
