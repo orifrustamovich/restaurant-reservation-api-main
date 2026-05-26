@@ -1,5 +1,8 @@
 # 🍽️ Restaurant Reservation API
 
+# 🔗 Live API Docs
+👉 **http://api.joyol.me/api/docs/**
+
 A production-ready RESTful API for managing restaurant reservations, built with Django REST Framework.
 
 ![Django](https://img.shields.io/badge/Django-4.2-green)
