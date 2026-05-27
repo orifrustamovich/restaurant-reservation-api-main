@@ -1,0 +1,81 @@
+name: CI
+
+# Qachon ishlaydi?
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    name: Test & Lint
+    runs-on: ubuntu-latest
+
+    # PostgreSQL servisi — real DB bilan test
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      # 1. Kodni yuklab olish
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Python 3.11 o'rnatish
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      # 3. pip cache — kutubxonalarni qayta yuklamaslik
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # 4. Kutubxonalar o'rnatish
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # 5. .env yaratish — CI uchun
+      - name: Create .env file
+        run: |
+          echo "SECRET_KEY=ci-secret-key-for-testing-only" >> .env
+          echo "DEBUG=True" >> .env
+          echo "ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0" >> .env
+          echo "DB_NAME=test_db" >> .env
+          echo "DB_USER=postgres" >> .env
+          echo "DB_PASSWORD=postgres" >> .env
+          echo "DB_HOST=localhost" >> .env
+          echo "DB_PORT=5432" >> .env
+
+      # 6. Django tekshirish
+      - name: Run Django checks
+        run: python manage.py check
+
+      # 7. Migration tekshirish
+      - name: Run migrations
+        run: python manage.py migrate
+
+      # 8. Testlar
+      - name: Run tests
+        run: pytest --tb=short
+
+      # 9. Coverage bilan testlar
+      - name: Run tests with coverage
+        run: pytest --cov=. --cov-report=xml --cov-report=term-missing
