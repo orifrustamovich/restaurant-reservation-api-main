@@ -2,7 +2,7 @@
 
 
 # 🔗 Live API Docs
-👉 **http://api.joyol.me/api/docs/**
+👉 **https://api.joyol.me/api/docs/**
 
 A production-ready RESTful API for managing restaurant reservations, built with Django REST Framework.
 
