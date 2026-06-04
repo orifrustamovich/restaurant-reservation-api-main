@@ -1,18 +1,30 @@
+cat > entrypoint.sh << 'SHELL'
 #!/bin/sh
 
 echo "Waiting for PostgreSQL..."
-python << EOF
-import socket, time
-while True:
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(("db", 5432))
-        s.close()
-        break
-    except:
-        time.sleep(0.5)
-EOF
+while true; do
+    python -c "
+import socket
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+try:
+    s.connect(('db', 5432))
+    s.close()
+    exit(0)
+except:
+    exit(1)
+" && break
+    sleep 0.5
+done
+echo "PostgreSQL ready!"
 
-python manage.py migrate
+echo "Running migrations..."
+python manage.py migrate --noinput
+
+echo "Collecting static files..."
 python manage.py collectstatic --noinput
-python manage.py runserver 0.0.0.0:8000
+
+echo "Starting server..."
+exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2
+SHELL
+
+chmod +x entrypoint.sh
