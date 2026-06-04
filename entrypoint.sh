@@ -1,3 +1,5 @@
+#!/bin/sh
+
 cat > entrypoint.sh << 'SHELL'
 #!/bin/sh
 
