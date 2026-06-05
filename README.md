@@ -87,27 +87,6 @@ cp .env.example .env
 docker compose up --build
 ```
 
-## Development Commands
-
-### Migrations
-```bash
-# Yangi migration yaratish
-docker compose run --rm --entrypoint="" web python manage.py makemigrations
-
-# Muayyan app uchun
-docker compose run --rm --entrypoint="" web python manage.py makemigrations users
-```
-
-### Tests
-```bash
-docker compose run --rm --entrypoint="" web pytest -v
-```
-
-### Django shell
-```bash
-docker compose run --rm --entrypoint="" web python manage.py shell
-```
-
 ## API Endpoints
 
 ### Authentication
