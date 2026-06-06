@@ -70,3 +70,14 @@ class TableViewSet(viewsets.ModelViewSet):
         if self.action in ["list", "retrieve"]:
             return [IsAuthenticatedOrReadOnly()]
         return [IsOwner()]
+
+    def get_queryset(self):
+        """
+        URL'da restaurant_id bo'lsa — o'sha restoranning stollarini qaytaradi.
+        Nested URL uchun: /api/restaurants/{restaurant_id}/tables/
+        """
+        queryset = super().get_queryset()
+        restaurant_id = self.kwargs.get("restaurant_pk")
+        if restaurant_id:
+            queryset = queryset.filter(restaurant_id=restaurant_id)
+        return queryset
