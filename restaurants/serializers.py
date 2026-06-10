@@ -6,7 +6,14 @@ from .models import Restaurant, Table
 class TableSerializer(serializers.ModelSerializer):
     class Meta:
         model = Table
-        fields = ["id", "table_number", "capacity", "is_available", "description"]
+        fields = [
+            "id",
+            "restaurant",
+            "table_number",
+            "capacity",
+            "is_available",
+            "description",
+        ]
         read_only_fields = ["id"]
 
 

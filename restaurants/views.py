@@ -1,6 +1,7 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
@@ -70,3 +71,33 @@ class TableViewSet(viewsets.ModelViewSet):
         if self.action in ["list", "retrieve"]:
             return [IsAuthenticatedOrReadOnly()]
         return [IsOwner()]
+
+    def get_queryset(self):
+        """
+        URL'da restaurant_id bo'lsa — o'sha restoranning stollarini qaytaradi.
+        Nested URL uchun: /api/restaurants/{restaurant_id}/tables/
+        """
+        queryset = super().get_queryset()
+        restaurant_id = self.kwargs.get("restaurant_pk")
+        if restaurant_id:
+            queryset = queryset.filter(restaurant_id=restaurant_id)
+        return queryset
+
+    def perform_create(self, serializer):
+        restaurant = serializer.validated_data["restaurant"]
+
+        if restaurant.owner != self.request.user:
+            raise PermissionDenied("You can only manage tables in your own restaurant.")
+
+        serializer.save()
+
+    def perform_update(self, serializer):
+        restaurant = serializer.validated_data.get(
+            "restaurant",
+            serializer.instance.restaurant,
+        )
+
+        if restaurant.owner != self.request.user:
+            raise PermissionDenied("You can only manage tables in your own restaurant.")
+
+        serializer.save()
