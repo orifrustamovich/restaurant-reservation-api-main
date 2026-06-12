@@ -136,6 +136,12 @@ CORS_ALLOWED_ORIGINS = [
     'https://project-q12sq.vercel.app'
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://joyol.me",
+    "https://www.joyol.me",
+    "https://project-q12sq.vercel.app",
+]
+
 # Production settings
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
