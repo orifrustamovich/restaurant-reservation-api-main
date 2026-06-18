@@ -1,3 +1,5 @@
+import datetime
+
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -8,11 +10,10 @@ from .models import Reservation
 
 class ReservationSerializer(serializers.ModelSerializer):
     """
-    Nested serializer — Reservation ichida Table va Restaurant ma'lumoti.
-    Bu "read" uchun — ko'rish paytida to'liq ma'lumot.
+    Nested serializer for read operations.
+    Includes table and restaurant information.
     """
 
-    # source — modelda qanday fielddan kelishini bildiradi
     table_detail = TableSerializer(source="table", read_only=True)
     restaurant_detail = RestaurantListSerializer(
         source="table.restaurant",
@@ -39,67 +40,76 @@ class ReservationSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "customer_email", "status", "created_at"]
 
     def validate_reservation_date(self, value):
-        """O'tib ketgan sanaga bron qilib bo'lmaydi"""
-        # if value < timezone.now().date():
-        # timezone.localdate() — server timezone bo'yicha bugungi sana
+        """
+        Prevent reservations for past dates.
+        """
         today = timezone.localdate()
+
         if value < today:
             raise serializers.ValidationError(
-                "O'tib ketgan sanaga bron qilib bo'lmaydi."
+                "Reservations cannot be made for past dates."
             )
+
         return value
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
 
-        # Start time end time dan oldin bo'lishi kerak
+        # Start time must be before end time
         if attrs.get("start_time") and attrs.get("end_time"):
             if attrs["start_time"] >= attrs["end_time"]:
                 raise serializers.ValidationError(
-                    "Boshlanish vaqti tugash vaqtidan oldin bo'lishi kerak."
+                    "Start time must be earlier than end time."
                 )
 
-        # =============================
-        # CONFLICT CHECK — eng muhim qism
-        # =============================
-        # Bir stolga bir vaqtda 2 ta bron bo'lmasligi uchun
+        # Prevent reservations for past times on the current day
+        if attrs.get("reservation_date") and attrs.get("start_time"):
+            reservation_datetime = timezone.make_aware(
+                datetime.datetime.combine(
+                    attrs["reservation_date"],
+                    attrs["start_time"],
+                )
+            )
+
+            if reservation_datetime <= timezone.now():
+                raise serializers.ValidationError(
+                    "Reservations must be made for a future date and time."
+                )
+
+        # Conflict check
         table = attrs.get("table")
         date = attrs.get("reservation_date")
         start = attrs.get("start_time")
         end = attrs.get("end_time")
 
         if table and date and start and end:
-            # Mavjud bronlarni tekshiramiz
-            # Overlap (kesishish) shartlari:
-            #   existing.start < new.end  AND  existing.end > new.start
-            # Bu klassik interval kesishish formulasi
             existing_reservations = Reservation.objects.filter(
                 table=table,
                 reservation_date=date,
-                status__in=[
-                    "pending",
-                    "confirmed",
-                ],  # Bekor qilinganlarni hisobga olmaymiz
+                status__in=["pending", "confirmed"],
             ).exclude(
-                pk=self.instance.pk
-                if self.instance
-                else None  # Update paytida o'zini exclude qilamiz
+                pk=self.instance.pk if self.instance else None
             )
 
             for reservation in existing_reservations:
-                overlap = reservation.start_time < end and reservation.end_time > start
+                overlap = (
+                    reservation.start_time < end
+                    and reservation.end_time > start
+                )
+
                 if overlap:
                     raise serializers.ValidationError(
-                        f"Bu stol {reservation.start_time}—{reservation.end_time} "
-                        f"vaqtida allaqachon band. Boshqa vaqt tanlang."
+                        f"This table is already reserved from "
+                        f"{reservation.start_time} to {reservation.end_time}. "
+                        f"Please choose another time."
                     )
 
-        # Stol sig'imi tekshirish
+        # Capacity check
         if table and attrs.get("party_size"):
             if attrs["party_size"] > table.capacity:
                 raise serializers.ValidationError(
-                    f"Bu stolga maksimum {table.capacity} kishi sig'adi. "
-                    f"Siz {attrs['party_size']} kishi uchun bron qilmoqchisiz."
+                    f"This table can accommodate a maximum of "
+                    f"{table.capacity} guests."
                 )
 
         return attrs
@@ -118,22 +128,38 @@ class ReservationCreateSerializer(serializers.ModelSerializer):
         ]
 
     def validate_reservation_date(self, value):
-        """O'tib ketgan sanaga bron qilib bo'lmaydi"""
-        # if value < timezone.now().date():
-        # timezone.localdate() — server timezone bo'yicha bugungi sana
+        """
+        Prevent reservations for past dates.
+        """
         today = timezone.localdate()
+
         if value < today:
             raise serializers.ValidationError(
-                "O'tib ketgan sanaga bron qilib bo'lmaydi."
+                "Reservations cannot be made for past dates."
             )
+
         return value
 
     def validate(self, attrs):
-        # Start time end time dan oldin bo'lishi kerak
+        # Start time must be before end time
         if attrs.get("start_time") and attrs.get("end_time"):
             if attrs["start_time"] >= attrs["end_time"]:
                 raise serializers.ValidationError(
-                    "Boshlanish vaqti tugash vaqtidan oldin bo'lishi kerak."
+                    "Start time must be earlier than end time."
+                )
+
+        # Prevent reservations for past times on the current day
+        if attrs.get("reservation_date") and attrs.get("start_time"):
+            reservation_datetime = timezone.make_aware(
+                datetime.datetime.combine(
+                    attrs["reservation_date"],
+                    attrs["start_time"],
+                )
+            )
+
+            if reservation_datetime <= timezone.now():
+                raise serializers.ValidationError(
+                    "Reservations must be made for a future date and time."
                 )
 
         table = attrs.get("table")
@@ -147,17 +173,24 @@ class ReservationCreateSerializer(serializers.ModelSerializer):
                 reservation_date=date,
                 status__in=["pending", "confirmed"],
             )
+
             for reservation in existing:
-                if reservation.start_time < end and reservation.end_time > start:
+                overlap = (
+                    reservation.start_time < end
+                    and reservation.end_time > start
+                )
+
+                if overlap:
                     raise serializers.ValidationError(
-                        f"Bu stol {reservation.start_time}—{reservation.end_time} "
-                        f"vaqtida allaqachon band."
+                        f"This table is already reserved from "
+                        f"{reservation.start_time} to {reservation.end_time}."
                     )
 
         if table and attrs.get("party_size"):
             if attrs["party_size"] > table.capacity:
                 raise serializers.ValidationError(
-                    f"Bu stolga maksimum {table.capacity} kishi sig'adi."
+                    f"This table can accommodate a maximum of "
+                    f"{table.capacity} guests."
                 )
 
         return attrs
